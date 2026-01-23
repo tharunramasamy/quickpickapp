@@ -1,5 +1,8 @@
+from dotenv import load_dotenv
 import pyodbc
 import os
+
+load_dotenv()
 
 def get_connection():
     server = os.getenv("DB_SERVER")
