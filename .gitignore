@@ -1,0 +1,14 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Env files (CRITICAL)
+.env
+backend/.env
+
+# Node
+node_modules/
+
+# Build output
+dist/

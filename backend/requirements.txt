@@ -1,0 +1,5 @@
+fastapi
+uvicorn
+pyodbc
+python-dotenv
+azure-messaging-webpubsubservice
