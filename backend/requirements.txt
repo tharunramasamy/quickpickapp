@@ -1,5 +1,5 @@
 fastapi
 uvicorn
-pymssql
+pyodbc
 python-dotenv
 azure-messaging-webpubsubservice
