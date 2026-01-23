@@ -93,8 +93,8 @@ def place_order(order: OrderCreate):
     # Validate stock
     for item in order.items:
         cur.execute(
-            "SELECT price, available_qty FROM products WHERE product_id=?",
-            item.product_id
+            "SELECT price, available_qty FROM products WHERE product_id=%s",
+            (item.product_id,)
         )
         row = cur.fetchone()
 
@@ -112,29 +112,29 @@ def place_order(order: OrderCreate):
     # Create order
     cur.execute("""
         INSERT INTO orders (customer_id, status, total_amount, payment_method)
-        VALUES (?, 'PLACED', ?, ?)
-    """, order.customer_id, total, order.payment_method)
+        VALUES (%s, 'PLACED', %s, %s)
+    """, (order.customer_id, total, order.payment_method))
 
     conn.commit()
-    cur.execute("SELECT @@IDENTITY")
+    cur.execute("SELECT SCOPE_IDENTITY()")
     order_id = int(cur.fetchone()[0])
 
     # Order items + inventory update
     for item in order.items:
         cur.execute(
-            "INSERT INTO order_items VALUES (?, ?, ?)",
-            order_id, item.product_id, item.quantity
+            "INSERT INTO order_items VALUES (%s, %s, %s)",
+            (order_id, item.product_id, item.quantity)
         )
         cur.execute(
-            "UPDATE products SET available_qty = available_qty - ? WHERE product_id = ?",
-            item.quantity, item.product_id
+            "UPDATE products SET available_qty = available_qty - %s WHERE product_id = %s",
+            (item.quantity, item.product_id)
         )
 
     # Delivery tracking
     cur.execute("""
         INSERT INTO delivery_tracking (order_id, status, last_updated)
-        VALUES (?, 'ORDER_PLACED', GETDATE())
-    """, order_id)
+        VALUES (%s, 'ORDER_PLACED', GETDATE())
+    """, (order_id,))
 
     conn.commit()
     conn.close()
@@ -155,8 +155,8 @@ def order_status(order_id: int):
     cur.execute("""
         SELECT status, last_updated
         FROM delivery_tracking
-        WHERE order_id = ?
-    """, order_id)
+        WHERE order_id = %s
+    """, (order_id,))
 
     row = cur.fetchone()
     conn.close()
@@ -200,12 +200,12 @@ def pick_inventory_order(order_id: int):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("UPDATE orders SET status='PICKED' WHERE order_id=?", order_id)
+    cur.execute("UPDATE orders SET status='PICKED' WHERE order_id=%s", (order_id,))
     cur.execute("""
         UPDATE delivery_tracking
         SET status='PICKED', last_updated=GETDATE()
-        WHERE order_id=?
-    """, order_id)
+        WHERE order_id=%s
+    """, (order_id,))
 
     conn.commit()
     conn.close()
@@ -243,12 +243,12 @@ def out_for_delivery(order_id: int):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("UPDATE orders SET status='OUT_FOR_DELIVERY' WHERE order_id=?", order_id)
+    cur.execute("UPDATE orders SET status='OUT_FOR_DELIVERY' WHERE order_id=%s", (order_id,))
     cur.execute("""
         UPDATE delivery_tracking
         SET status='OUT_FOR_DELIVERY', last_updated=GETDATE()
-        WHERE order_id=?
-    """, order_id)
+        WHERE order_id=%s
+    """, (order_id,))
 
     conn.commit()
     conn.close()
@@ -256,27 +256,36 @@ def out_for_delivery(order_id: int):
     send_order_update(order_id, "OUT_FOR_DELIVERY")
     return {"message": "Out for delivery"}
 
-@app.put("/delivery/orders/{order_id}/deliver")
-def deliver_order(order_id: int):
+@app.put("/delivery/orders/{order_id}/delivered")
+def mark_delivered(order_id: int):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("UPDATE orders SET status='DELIVERED' WHERE order_id=?", order_id)
-    cur.execute("""
+    # Update order status
+    cur.execute(
+        """
+        UPDATE orders
+        SET status = 'DELIVERED'
+        WHERE order_id = %s
+        """,
+        (order_id,)
+    )
+
+    # Update tracking table
+    cur.execute(
+        """
         UPDATE delivery_tracking
-        SET status='DELIVERED', last_updated=GETDATE()
-        WHERE order_id=?
-    """, order_id)
+        SET status = 'DELIVERED',
+            last_updated = GETDATE()
+        WHERE order_id = %s
+        """,
+        (order_id,)
+    )
 
     conn.commit()
     conn.close()
 
-    send_order_update(order_id, "DELIVERED")
-    return {"message": "Order delivered"}
-
-# ======================================================
-# REALTIME (AZURE WEB PUBSUB)
-# ======================================================
+    return {"message": "Order marked as DELIVERED"}
 
 @app.get("/realtime/negotiate")
 def negotiate():
