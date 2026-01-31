@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-python-dotenv
-pyodbc
-azure-messaging-webpubsubservice
-python-jose
-passlib[bcrypt]

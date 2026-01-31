@@ -1,0 +1,26 @@
+﻿Connecting...
+
+--- Constraints on dbo.customers ---
+Constraint: PK__customer__CD65CB85D2C57DF2 (PRIMARY_KEY_CONSTRAINT)
+Constraint: UQ__customer__B7456514E2E46E5C (UNIQUE_CONSTRAINT)
+Constraint: UQ__customer__B9BE370E496333BB (UNIQUE_CONSTRAINT)
+
+--- Indexes on dbo.customers ---
+Index: PK__customer__CD65CB85D2C57DF2 (Unique: True, Filtered: False)
+Index: UQ__customer__B7456514E2E46E5C (Unique: True, Filtered: False)
+Index: UQ__customer__B9BE370E496333BB (Unique: True, Filtered: False)
+Index: UQ_customers_referral_code (Unique: True, Filtered: True)
+
+--- Columns in dbo.customers ---
+Column: customer_id (int), Nullable: False
+Column: user_id (nvarchar), Nullable: False
+Column: total_orders (int), Nullable: True
+Column: total_spent (decimal), Nullable: True
+Column: default_address (nvarchar), Nullable: True
+Column: delivery_addresses (nvarchar), Nullable: True
+Column: preferred_payment_method (nvarchar), Nullable: True
+Column: referral_code (nvarchar), Nullable: True
+Column: loyalty_points (int), Nullable: True
+Column: is_subscribed_to_notifications (bit), Nullable: True
+Column: created_at (datetime), Nullable: True
+Column: updated_at (datetime), Nullable: True
